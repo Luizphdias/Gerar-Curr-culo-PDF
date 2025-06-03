@@ -1,0 +1,307 @@
+<html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <title>Cadastro de Currículo</title>
+    <!-- Importa a biblioteca jsPDF para gerar PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* Estilo geral da página */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        /* Container que agrupa o formulário e o resultado */
+        .container {
+            display: flex;
+            gap: 40px;
+            margin-top: 20px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        /* Estilo do formulário */
+        form {
+            border: 1px solid #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color: #57a4e2;
+            color: #fff;
+            width: 300px;
+        }
+        /* Estilo dos labels */
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        /* Estilo dos inputs */
+        input {
+            width: 100%;
+            padding: 6px;
+            border-radius: 4px;
+            border: none;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        /* Estilo dos botões */
+        button {
+            margin-right: 10px;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #0b3481;
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #093170;
+        }
+        /* Estilo da área de resultado do currículo */
+        #resultado {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            color: #333;
+            width: 300px;
+            font-size: 14px;
+        }
+        /* Estilo da imagem de perfil exibida no resultado */
+        #resultado img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cadastro de Currículo</h1>
+
+    <div class="container">
+        <!-- Formulário para cadastro -->
+        <form id="form-curriculo" onsubmit="return false;">
+            <label for="nome">Nome completo:</label>
+            <input type="text" id="nome" placeholder="Digite seu nome" required>
+
+            <label for="email">E-mail:</label>
+            <input type="email" id="email" placeholder="Digite seu E-mail" required>
+
+            <label for="idade">Idade:</label>
+            <input type="number" id="idade" placeholder="Digite sua idade" min="0" required>
+
+            <label for="cidadeEstado">Cidade/Estado:</label>
+            <input type="text" id="cidadeEstado" placeholder="Digite sua cidade/estado" required>
+
+            <label for="endereco">Endereço:</label>
+            <input type="text" id="endereco" placeholder="Digite seu endereço" required>
+
+            <label for="telefone">Telefone:</label>
+            <!-- Usei type="tel" para melhor semântica e suporte -->
+            <input type="tel" id="telefone" placeholder="Digite seu telefone de contato" required>
+
+            <label for="objetivoProf">Objetivo profissional:</label>
+            <input type="text" id="objetivoProf" placeholder="Qual seu objetivo profissional?" required>
+
+            <label for="formacaoAcad">Formação acadêmica:</label>
+            <input type="text" id="formacaoAcad" placeholder="Qual sua formação acadêmica?" required>
+
+            <label for="experienciaProf">Experiência profissional:</label>
+            <input type="text" id="experienciaProf" placeholder="Qual sua experiência profissional?" required>
+
+            <label for="cursosCompl">Cursos complementares:</label>
+            <input type="text" id="cursosCompl" placeholder="Quais cursos complementares?" required>
+
+            <label for="idiomas">Idiomas:</label>
+            <input type="text" id="idiomas" placeholder="Idiomas" required>
+
+            <label for="fotoPerfil">Foto de Perfil:</label>
+            <input type="file" id="fotoPerfil" accept="image/*">
+
+            <!-- Botões para ações -->
+            <button type="button" onclick="gerarCur()">Gerar Currículo</button>
+            <button type="button" onclick="gerarPDF()">Gerar PDF</button>
+            <button type="button" onclick="limpar()">Novo Currículo</button><br>
+        </form>
+
+        <!-- Área onde o currículo gerado será exibido -->
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        // Variável global para armazenar a imagem em base64 para uso no PDF
+        let fotoDataUrl = "";
+
+        // Função para gerar e exibir o currículo na tela
+        function gerarCur() {
+            // Obtenção dos valores dos campos do formulário
+            const nome = document.getElementById("nome").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const idade = document.getElementById("idade").value.trim();
+            const cidadeEstado = document.getElementById("cidadeEstado").value.trim();
+            const endereco = document.getElementById("endereco").value.trim();
+            const telefone = document.getElementById("telefone").value.trim();
+            const objetivoProf = document.getElementById("objetivoProf").value.trim();
+            const formacaoAcad = document.getElementById("formacaoAcad").value.trim();
+            const experienciaProf = document.getElementById("experienciaProf").value.trim();
+            const cursosCompl = document.getElementById("cursosCompl").value.trim();
+            const idiomas = document.getElementById("idiomas").value.trim();
+            const fotoInput = document.getElementById("fotoPerfil");
+            const resultado = document.getElementById("resultado");
+
+            // Validação simples para garantir que todos os campos obrigatórios estejam preenchidos
+            if (nome && email && idade && cidadeEstado && endereco && telefone && objetivoProf && formacaoAcad && experienciaProf && cursosCompl && idiomas) {
+                // Se o usuário escolheu uma foto, convertemos ela para DataURL para exibição e PDF
+                if (fotoInput.files && fotoInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        fotoDataUrl = e.target.result; // Armazena a imagem para uso futuro no PDF
+                        // Monta o HTML com todos os dados e a imagem
+                        resultado.innerHTML = `
+                            <h3>Currículo Gerado:</h3>
+                            <img src="${fotoDataUrl}" alt="Foto de Perfil">
+                            <strong>Nome:</strong> <span id="res-nome">${nome}</span><br>
+                            <strong>E-mail:</strong> <span id="res-email">${email}</span><br>
+                            <strong>Idade:</strong> <span id="res-idade">${idade}</span><br>
+                            <strong>Cidade/Estado:</strong> <span id="res-cidadeEstado">${cidadeEstado}</span><br>
+                            <strong>Endereço:</strong> <span id="res-endereco">${endereco}</span><br>
+                            <strong>Telefone:</strong> <span id="res-telefone">${telefone}</span><br>
+                            <strong>Objetivo Profissional:</strong> <span id="res-objetivoProf">${objetivoProf}</span><br>
+                            <strong>Formação Acadêmica:</strong> <span id="res-formacaoAcad">${formacaoAcad}</span><br>
+                            <strong>Experiência Profissional:</strong> <span id="res-experienciaProf">${experienciaProf}</span><br>
+                            <strong>Cursos Complementares:</strong> <span id="res-cursosCompl">${cursosCompl}</span><br>
+                            <strong>Idiomas:</strong> <span id="res-idiomas">${idiomas}</span>
+                        `;
+                    };
+                    reader.readAsDataURL(fotoInput.files[0]);
+                } else {
+                    // Caso não haja foto, exibe somente os dados do formulário
+                    fotoDataUrl = ""; // Garante que a imagem esteja vazia para o PDF
+                    resultado.innerHTML = `
+                        <h3>Currículo Gerado:</h3>
+                        <strong>Nome:</strong> <span id="res-nome">${nome}</span><br>
+                        <strong>E-mail:</strong> <span id="res-email">${email}</span><br>
+                        <strong>Idade:</strong> <span id="res-idade">${idade}</span><br>
+                        <strong>Cidade/Estado:</strong> <span id="res-cidadeEstado">${cidadeEstado}</span><br>
+                        <strong>Endereço:</strong> <span id="res-endereco">${endereco}</span><br>
+                        <strong>Telefone:</strong> <span id="res-telefone">${telefone}</span><br>
+                        <strong>Objetivo Profissional:</strong> <span id="res-objetivoProf">${objetivoProf}</span><br>
+                        <strong>Formação Acadêmica:</strong> <span id="res-formacaoAcad">${formacaoAcad}</span><br>
+                        <strong>Experiência Profissional:</strong> <span id="res-experienciaProf">${experienciaProf}</span><br>
+                        <strong>Cursos Complementares:</strong> <span id="res-cursosCompl">${cursosCompl}</span><br>
+                        <strong>Idiomas:</strong> <span id="res-idiomas">${idiomas}</span>
+                    `;
+                }
+            } else {
+                // Caso algum campo obrigatório não esteja preenchido, exibe mensagem de erro
+                resultado.innerHTML = "<span style='color: red;'>Por favor, preencha todos os campos.</span>";
+            }
+        }
+
+        // Função para limpar o formulário e a área de resultado
+        function limpar() {
+            // IDs dos campos do formulário
+            const campos = [
+                "nome", "email", "idade", "cidadeEstado", "endereco",
+                "telefone", "objetivoProf", "formacaoAcad",
+                "experienciaProf", "cursosCompl", "idiomas", "fotoPerfil"
+            ];
+            // Limpa cada campo, inclusive o input de arquivo
+            campos.forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem.type === "file") {
+                    elem.value = ""; // Limpa arquivo selecionado
+                } else {
+                    elem.value = ""; // Limpa valor do campo
+                }
+            });
+            // Limpa também o conteúdo do resultado
+            document.getElementById("resultado").innerHTML = "";
+            fotoDataUrl = ""; // Reseta a imagem armazenada
+        }
+
+        // Função para gerar o PDF usando jsPDF
+       async function gerarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+    if (!document.getElementById('res-nome')) {
+        alert("Por favor, gere o currículo antes de criar o PDF.");
+        return;
+    }
+
+    const nome = document.getElementById('res-nome').textContent;
+    const email = document.getElementById('res-email').textContent;
+    const idade = document.getElementById('res-idade').textContent;
+    const cidadeEstado = document.getElementById('res-cidadeEstado').textContent;
+    const endereco = document.getElementById('res-endereco').textContent;
+    const telefone = document.getElementById('res-telefone').textContent;
+    const objetivoProf = document.getElementById('res-objetivoProf').textContent;
+    const formacaoAcad = document.getElementById('res-formacaoAcad').textContent;
+    const experienciaProf = document.getElementById('res-experienciaProf').textContent;
+    const cursosCompl = document.getElementById('res-cursosCompl').textContent;
+    const idiomas = document.getElementById('res-idiomas').textContent;
+
+    let x = 20; // Margem esquerda (3 cm ≈ 30mm, mas ajustado para visibilidade)
+    let y = 30; // Margem superior
+    const lineHeight = 7;
+
+    doc.setFont("Times", "normal");
+    doc.setFontSize(14);
+    doc.text("Currículo", 105, 20, { align: "center" });
+
+    // Foto, se existir
+    if (fotoDataUrl) {
+        doc.addImage(fotoDataUrl, "JPEG", 160, 20, 30, 30);
+    }
+
+    doc.setFontSize(12);
+    doc.setFont("Times", "bold");
+    doc.text("Dados Pessoais", x, y); y += lineHeight;
+
+    doc.setFont("Times", "normal");
+    doc.text(`Nome: ${nome}`, x, y); y += lineHeight;
+    doc.text(`Idade: ${idade}`, x, y); y += lineHeight;
+    doc.text(`Endereço: ${endereco}`, x, y); y += lineHeight;
+    doc.text(`Cidade/Estado: ${cidadeEstado}`, x, y); y += lineHeight;
+    doc.text(`Telefone: ${telefone}`, x, y); y += lineHeight;
+    doc.text(`E-mail: ${email}`, x, y); y += lineHeight * 2;
+
+    doc.setFont("Times", "bold");
+    doc.text("Objetivo Profissional", x, y); y += lineHeight;
+    doc.setFont("Times", "normal");
+    doc.text(objetivoProf, x, y); y += lineHeight * 2;
+
+    doc.setFont("Times", "bold");
+    doc.text("Formação Acadêmica", x, y); y += lineHeight;
+    doc.setFont("Times", "normal");
+    doc.text(formacaoAcad, x, y); y += lineHeight * 2;
+
+    doc.setFont("Times", "bold");
+    doc.text("Experiência Profissional", x, y); y += lineHeight;
+    doc.setFont("Times", "normal");
+    doc.text(experienciaProf, x, y); y += lineHeight * 2;
+
+    doc.setFont("Times", "bold");
+    doc.text("Cursos Complementares", x, y); y += lineHeight;
+    doc.setFont("Times", "normal");
+    doc.text(cursosCompl, x, y); y += lineHeight * 2;
+
+    doc.setFont("Times", "bold");
+    doc.text("Idiomas", x, y); y += lineHeight;
+    doc.setFont("Times", "normal");
+    doc.text(idiomas, x, y); y += lineHeight;
+
+    doc.save("curriculo_abnt.pdf");
+}
+    </script>
+</body>
+</html>
